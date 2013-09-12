@@ -11,7 +11,7 @@ i = 1
 
 post_numbers = []
 posts_with_comments = []
-posts_processed_count = 0
+posts_processed_count = point_count = 0
 
 
 def GetNumberOfStoredPosts():
@@ -59,15 +59,21 @@ if __name__ == "__main__":
 			GetNumbers(content)
 			i+=1
 		except urllib.error.HTTPError:
+			print("%s page(s) total." % (i-1))
 			break
 
 	for post_number in post_numbers:
 		if post_number > last_post:
 			posts_with_comments.append(GetMessageWithComments(post_number)[0:])
 			posts_processed_count += 1
+			print(".", end="")
+			point_count += 1
+			if point_count % 20 == 0:
+				print('.')
 
 
-	print("%s posts processed, %s posts total." % (posts_processed_count, posts_processed_count+len(stored_numbers)))
+
+	print("\n\n%s posts processed, %s posts total." % (posts_processed_count, posts_processed_count+len(stored_numbers)))
 
 	if posts_processed_count != 0:
 		with open('constellation.json', 'r') as f:
