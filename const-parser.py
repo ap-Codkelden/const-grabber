@@ -8,9 +8,21 @@ TAG_URL = """http://api.juick.com/messages?tag=%D1%81%D0%BE%D0%B7%D0%B2%D0%B5%D0
 
 
 i = 1
+
 post_numbers = []
 posts_with_comments = []
+posts_processed_count = 0
 
+
+def GetNumberOfStoredPosts():
+	try:
+		with open('posts', 'r') as post_numbers_storage:
+			l = post_numbers_storage.readlines()
+	except IOError:
+		post_numbers_storage = open('posts', 'w')
+		l = []
+	post_numbers_storage.close()
+	return l
 
 def GetMessageWithComments(message_number):
 	return GetContent("http://api.juick.com/thread?mid=%s" % (message_number))
@@ -28,8 +40,19 @@ def GetContent(url, number=''):
 def GetNumbers(content):
 	for i in content:
 		post_numbers.append(i['mid'])
+		post_numbers_storage.write(str(i['mid'])+'\n')
+
 
 if __name__ == "__main__":
+	
+	stored_numbers = GetNumberOfStoredPosts()
+	if len(stored_numbers) == 0:
+		last_post = 0
+	else:
+		last_post = int(stored_numbers[0])
+
+	post_numbers_storage = open('posts', 'w+')
+
 	while True:
 		try:
 			content = GetContent(TAG_URL, i)
@@ -39,9 +62,22 @@ if __name__ == "__main__":
 			break
 
 	for post_number in post_numbers:
-		posts_with_comments.append(GetMessageWithComments(post_number)[0:])
+		if post_number > last_post:
+			posts_with_comments.append(GetMessageWithComments(post_number)[0:])
+			posts_processed_count += 1
 
-	print("%s posts processed." % len(post_numbers))
 
-	with open('data.txt', 'w') as outfile:
-		json.dump(posts_with_comments, outfile, ensure_ascii=False, indent=1)
+	print("%s posts processed, %s posts total." % (posts_processed_count, posts_processed_count+len(stored_numbers)))
+
+	if posts_processed_count != 0:
+		with open('constellation.json', 'r') as f:
+			old_json_data = json.load(f)
+		f.close()
+		for post in posts_with_comments:
+			old_json_data.append(post)
+
+		with open('constellation.json', 'w') as outfile:
+			json.dump(old_json_data, outfile, ensure_ascii=False, indent=1)
+
+
+	post_numbers_storage.close()
