@@ -1,45 +1,38 @@
+import json
 import sqlite3
-
-"""
-(17445, 'ap-Codkelden', 17)
-"""
-
-def CheckDB():
-	try:
-		with open('post.db'):
-			pass 
-	except IOError:
-		return False
-	return True
-
-class JuickPosts:
-	def __init___(self):
-		pass
-
-	def Connect(self):
-		try:
-			self.post_db = sqlite3.connect("post.db")
-			self.cursor = self.post_db.cursor()
-		except:
-			print("Something went wrong.")
+import sys
 
 
-	def CheckTable(self):
-		self.cursor.execute("PRAGMA table_info(posts);")
-		posts_table_data = self.cursor.fetchall()
-		if len(posts_table_data)!=0:
-			self.cursor.execute("SELECT * FROM posts;")
-			posts = self.cursor.fetchall()
-		if len(posts) != 0:
-			return 1
-		else:
-			return 0
+def create_user_list():
+	cursor.execute("CREATE TABLE IF NOT EXISTS users (uid integer, uname text);")
+	post_db.commit()
+	cursor.execute("SELECT DISTINCT uid, uname FROM posts;")
+	users = cursor.fetchall()
+	for i in users:
+		cursor.execute("INSERT INTO users VALUES (%d, '%s')" % (i[0], i[1]))
+
+def delete_user_list():
+	post_db.commit
+	cursor.execute("DROP TABLE users")
+	post_db.commit
+
+
+def posts_per_user():
+	create_user_list()
+	cursor.execute("SELECT u.uname, COUNT(p.msgid)  FROM users u \
+		LEFT OUTER JOIN posts p \
+		ON u.uid = p.uid \
+		GROUP BY u.uid, u.uname \
+		ORDER BY 2 DESC")
+	ppu = cursor.fetchall()
+	delete_user_list()
+
+	with open("posts_per_user.json", 'w') as ppu_file:
+		json.dump(ppu, ppu_file,  ensure_ascii=False)
+	sys.stdout.write('Data saved in posts_per_user.json\n')
+
+post_db = sqlite3.connect('post.db')
+cursor = post_db.cursor()
 
 if __name__ == "__main__":
-	if CheckDB():
-		db_handle = JuickPosts()
-		db_handle.Connect()
-		#attrs = vars(db_handle)
-		#print(', '.join("%s: %s" % item for item in attrs.items()))
-		if db_handle.CheckTable():
-			db_handle.create_tables()
+	posts_per_user()
