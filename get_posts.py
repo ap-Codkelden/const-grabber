@@ -84,7 +84,7 @@ def get_comments():
 
 
 def main():
-	page_number = 84
+	page_number = 1
 	try:
 		create_db()
 	except:
@@ -113,7 +113,7 @@ def main():
 		cursor.execute("SELECT COUNT(*) from posts")
 		result=cursor.fetchone()[0]
 		pages = page_number-1
-		sys.stdout.write("There are {0} messages in database, total pages count: {1}\n".format(result, pages))
+		sys.stdout.write("There are {0} messages in database.\n".format(result))
 
 
 if __name__ == "__main__":
