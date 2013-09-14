@@ -8,17 +8,12 @@ import sqlite3
 from operator import itemgetter
 import http.client
 import sys 
-#import os
-
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-v', '--verbose', help='print messages', \
                         action='store_true', default=False, dest='verbose')
 
-
-
 URL_STRING = """http://api.juick.com/messages?tag=%D1%81%D0%BE%D0%B7%D0%B2%D0%B5%D0%B7%D0%B4%D0%B8%D0%B5&page="""
-
 
 def create_db():
 	global cursor
@@ -28,9 +23,7 @@ def create_db():
 
 	cursor.execute('''CREATE TABLE if not exists posts (msgid integer, uid integer, uname text, body text, tags text, timestamp text, replies integer)''')
 	post_db.commit()
-	#cursor.execute('''PRAGMA table_info(posts);''')
-	#result=cursor.fetchall()
-	#print(result)
+
 
 def GetContent(number, url=URL_STRING):
 	try:
@@ -44,6 +37,7 @@ def GetContent(number, url=URL_STRING):
 	except urllib.error.HTTPError:
 		return 0
 
+
 def json_parser(posts):
 	for post in posts:
 		msgid = post['mid']
@@ -56,7 +50,6 @@ def json_parser(posts):
 			replies = post['replies']
 		except KeyError:
 			replies = 0
-		#print(msgid,'\t',last_post)
 		if msgid == last_post:
 			if args.verbose:
 				sys.stdout.write("There are no new messages, stop fetching...\n\n")
@@ -78,6 +71,7 @@ def GetLastPost():
 		cursor.execute("SELECT max(msgid) from posts")
 		result=cursor.fetchone()
 		return result[0]
+
 
 def get_comments():
 	pass
@@ -117,6 +111,5 @@ def main():
 
 
 if __name__ == "__main__":
-	# получаем агрументы командной строки
 	args = arg_parser.parse_args()
 	main()
