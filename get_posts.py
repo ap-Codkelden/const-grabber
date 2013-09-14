@@ -88,7 +88,7 @@ def main():
 	try:
 		create_db()
 	except:
-		sys.stdout.write("Error\n")
+		sys.stdout.write("Error database creation.\n")
 
 	global last_post
 	last_post = GetLastPost()
