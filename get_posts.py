@@ -6,8 +6,9 @@ import urllib.request
 import json
 import sqlite3
 from operator import itemgetter
+import http.client
 import sys 
-import os
+#import os
 
 
 arg_parser = argparse.ArgumentParser()
@@ -39,11 +40,9 @@ def GetContent(number, url=URL_STRING):
 		raw_content = text.read().replace(b"\t", b"")
 		readable = raw_content.decode('utf-8')
 		json_data = json.loads(readable)
-		#print(json_data)
 		return json_data
 	except urllib.error.HTTPError:
-		#sys.stdout.write("Total pages count: %d\n" % number-1)
-		return
+		return 0
 
 def json_parser(posts):
 	for post in posts:
@@ -60,7 +59,7 @@ def json_parser(posts):
 		#print(msgid,'\t',last_post)
 		if msgid == last_post:
 			if args.verbose:
-				sys.stdout.write("No new posts found in further, stop fetching...\n\n")
+				sys.stdout.write("There are no new messages, stop fetching...\n\n")
 			return 0
 		else:
 			sql = """INSERT INTO posts VALUES (%d, %d, "%s", "%s", "%s", "%s", %d)""" % \
@@ -80,40 +79,12 @@ def GetLastPost():
 		result=cursor.fetchone()
 		return result[0]
 
-def create_user_list():
-	cursor.execute("CREATE TABLE IF NOT EXISTS users (uid integer, uname text);")
-	post_db.commit()
-	cursor.execute("SELECT DISTINCT uid, uname FROM posts;")
-	users = cursor.fetchall()
-	for i in users:
-		cursor.execute("INSERT INTO users VALUES (%d, '%s')" % (i[0], i[1]))
-
-def delete_user_list():
-	post_db.commit
-	cursor.execute("DROP TABLE users")
-	post_db.commit
-
-
-def posts_per_user():
-	create_user_list()
-	cursor.execute("SELECT u.uname, COUNT(p.msgid)  FROM users u \
-		LEFT OUTER JOIN posts p \
-		ON u.uid = p.uid \
-		GROUP BY u.uid, u.uname \
-		ORDER BY 2 DESC")
-	ppu = cursor.fetchall()
-	delete_user_list()
-
-	with open("posts_per_user.json", 'w') as ppu_file:
-		json.dump(ppu, ppu_file,  ensure_ascii=False)
-	sys.stdout.write('Data saved in posts_per_user.json\n')
-
 def get_comments():
 	pass
 
 
 def main():
-	page_number = 1
+	page_number = 84
 	try:
 		create_db()
 	except:
@@ -125,37 +96,27 @@ def main():
 		if last_post == 0:
 			sys.stdout.write("We are have no data about the number\nof the last post, is this 1st run?\n")
 		else:
-			sys.stdout.write("Last post is post #%d\n" % last_post)
+			sys.stdout.write("Last message is message #{0}\n".format(last_post))
 
 	#while page_number < 5:
 	while True:
-		try:
-			data = GetContent(page_number)
-			if data != None:
-				if json_parser(data) == 1:
-					page_number += 1
-				else:
-					break
+		data = GetContent(page_number)
+		if data != 0:
+			if json_parser(data) == 1:
+				page_number += 1
 			else:
 				break
-		except (urllib.error.HTTPError):
-			sys.stdout.write("Total pages count: %d\n" % page_number-1)
+		else:
 			break
-
-
-
-	""" Вызов функций, представляющих всякую статистику """
-	posts_per_user()
-
 	
 	if args.verbose:
 		cursor.execute("SELECT COUNT(*) from posts")
-		result=cursor.fetchone()
-		sys.stdout.write("There are %d posts in database.\n" % result)
+		result=cursor.fetchone()[0]
+		pages = page_number-1
+		sys.stdout.write("There are {0} messages in database, total pages count: {1}\n".format(result, pages))
 
 
 if __name__ == "__main__":
 	# получаем агрументы командной строки
 	args = arg_parser.parse_args()
 	main()
-	#make_total()
