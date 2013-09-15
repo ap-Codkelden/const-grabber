@@ -34,7 +34,7 @@ def GetContent(number, url=URL_STRING):
 
 
 def get_stored_posts():
-	cursor.execute("SELECT msgid FROM posts;")
+	cursor.execute("SELECT mid FROM posts;")
 	for x in cursor.fetchall():
 		c_live.execute("insert into stored_posts values (%d)" % x[0])
 
@@ -61,7 +61,7 @@ def append(lost_posts):
 		readable = raw_content.decode('utf-8')
 		post = json.loads(readable)[0]
 		#print(json_data)
-		msgid = post['mid']
+		mid = post['mid']
 		uid = post['user']['uid']
 		uname = post['user']['uname']
 		body = post['body']
@@ -71,9 +71,9 @@ def append(lost_posts):
 			replies = post['replies']
 		except KeyError:
 			replies = 0
-		#print(msgid,'\t',last_post)
+		#print(mid,'\t',last_post)
 		sql = """INSERT INTO posts VALUES (%d, %d, "%s", "%s", "%s", "%s", %d)""" % \
-		(msgid, uid, uname, body, tags, timestamp, replies)
+		(mid, uid, uname, body, tags, timestamp, replies)
 		print(sql)
 		cursor.execute(sql)
 		post_db.commit()
