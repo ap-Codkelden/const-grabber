@@ -7,7 +7,7 @@ import json
 import sqlite3
 from operator import itemgetter
 import http.client
-import sys 
+import sys
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-v', '--verbose', help='print messages', \
@@ -47,26 +47,18 @@ def GetContent(number, url=URL_STRING):
 
 def json_parser(posts):
 	for post in posts:
-		mid = post['mid']
-		uid = post['user']['uid']
-		uname = post['user']['uname']
-		body = post['body']
-		tags = post['tags']
-		timestamp = post['timestamp']
-		try:
-			replies = post['replies']
-		except KeyError:
-			replies = 0
-		if mid == last_post:
+		if post['mid'] == last_post:
 			if args.verbose:
 				sys.stdout.write("There are no new messages, stop fetching...\n\n")
 			return 0
 		else:
-			sql = """INSERT INTO posts VALUES (%d, %d, "%s", "%s", "%s", "%s", %d)""" % \
-			(mid, uid, uname, body, tags, timestamp, replies)
+			sql = """INSERT INTO posts VALUES ({0}, {1}, '{2}', "{3}", "{4}",\
+				"{5}", {6})""".format(post['mid'], post['user']['uid'],\
+				post['user']['uname'], post['body'], post['tags'], post['timestamp'],\
+				(post['replies'] if 'replies' in post else 0))
 			cursor.execute(sql)
 			post_db.commit()
-			new_posts.append(mid)
+			new_posts.append(post['mid'])
 	return 1
 
 
@@ -98,7 +90,7 @@ def fetch_comment(comment):
 					rid = 'null'
 				if 'replyto' in  json_thread[c]:
 					replyto = json_thread[c]['replyto']
-				else: 
+				else:
 					replyto = 'null'
 				uid = json_thread[c]['user']['uid']
 				uname = json_thread[c]['user']['uname']
@@ -127,12 +119,12 @@ def get_comments():
 
 
 def main():
-	""" 	For production launch purposes, page_number variable always 
-	MUST be equal 1, but for debugging you can make it equal any 
+	""" 	For production launch purposes, page_number variable always
+	MUST be equal 1, but for debugging you can make it equal any
 	non-negative integer lower than pages count 	"""
 	page_number = 1
 
-	""" 	new_posts -- this is a list in which will store numbers 
+	""" 	new_posts -- this is a list in which will store numbers
 	of the new discovering messages 	"""
 	global new_posts
 	new_posts = []
@@ -164,11 +156,11 @@ def main():
 	# We get the rockets, if its here :)
 	if len(new_posts) > 0:
 		get_comments()
-	
+
 	if args.verbose:
 		cursor.execute("SELECT COUNT(*) from posts")
 		count_posts=cursor.fetchone()[0]
-		
+
 		cursor.execute("SELECT COUNT(*) from comments")
 		count_replies=cursor.fetchone()[0]
 
