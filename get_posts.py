@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import argparse
@@ -22,7 +22,7 @@ URL_COMMENT = """http://api.juick.com/thread?mid="""
 def create_db():
 	global cursor
 	global post_db
-	post_db = sqlite3.connect('post.db')
+	post_db = sqlite3.connect('posts.db')
 	cursor = post_db.cursor()
 
 	cursor.execute('''CREATE TABLE if not exists posts (mid integer, uid integer, uname text, body text, \
@@ -127,17 +127,13 @@ def get_comments():
 
 
 def main():
-	"""
-	For production launch purposes, page_number variable always 
+	""" 	For production launch purposes, page_number variable always 
 	MUST be equal 1, but for debugging you can make it equal any 
-	non-negative integer lower than pages count 
-	"""
+	non-negative integer lower than pages count 	"""
 	page_number = 1
 
-	"""
-	new_posts -- this is a list in which will store numbers 
-	of the new discovering messages 
-	"""
+	""" 	new_posts -- this is a list in which will store numbers 
+	of the new discovering messages 	"""
 	global new_posts
 	new_posts = []
 
@@ -171,9 +167,12 @@ def main():
 	
 	if args.verbose:
 		cursor.execute("SELECT COUNT(*) from posts")
-		result=cursor.fetchone()[0]
-		pages = page_number-1
-		sys.stdout.write("There are {0} messages in database.\n".format(result))
+		count_posts=cursor.fetchone()[0]
+		
+		cursor.execute("SELECT COUNT(*) from comments")
+		count_replies=cursor.fetchone()[0]
+
+		sys.stdout.write("There are {0} messages, {1} comments in database.\n".format(count_posts,count_replies))
 
 
 if __name__ == "__main__":
@@ -184,3 +183,4 @@ if __name__ == "__main__":
 	main()
 	if args.log:
 		logfile.close()
+	exit(0)
