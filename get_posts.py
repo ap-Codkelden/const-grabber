@@ -47,6 +47,8 @@ def GetContent(number, url=URL_STRING):
 
 def json_parser(posts):
 	for post in posts:
+		if args.verbose:
+			sys.stdout.write("message #{0}\n".format(post['mid']))
 		if post['mid'] == last_post:
 			if args.verbose:
 				sys.stdout.write("There are no new messages, stop fetching...\n\n")
