@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""TODO : lock file"""
+
 import argparse
 import urllib.request
 import json
@@ -8,6 +10,7 @@ import sqlite3
 from operator import itemgetter
 import http.client
 import sys
+from db_handle import db_handle
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-v', '--verbose', help='print messages', \
@@ -28,9 +31,11 @@ def create_db():
 	cursor.execute('''CREATE TABLE if not exists posts (mid integer, uid integer, uname text, body text, \
 		tags text, timestamp text, replies integer)''')
 	cursor.execute("""CREATE TABLE if not exists comments (mid integer, rid integer, replyto integer, \
-		uid integer, uname text, body text, timestamp text)""")
+		uid integer, uname text, body text, timestamp text);""")
+	# таблица чёрного списка
+	# содержит пары "uid - uname"
+	cursor.execute("""CREATE TABLE if not exists blacklist (uid integer, uname text);""")
 	post_db.commit()
-
 
 def GetContent(number, url=URL_STRING):
 	try:
@@ -132,6 +137,9 @@ def main():
 	new_posts = []
 
 	try:
+		# если файл существует, ничего
+		# если нет -- создать
+		# backup_db()
 		create_db()
 	except:
 		sys.stdout.write("Error database creation.\n")
@@ -159,6 +167,8 @@ def main():
 	if len(new_posts) > 0:
 		get_comments()
 
+	# delete records from BL
+	db.deleteBLRecords()
 	if args.verbose:
 		cursor.execute("SELECT COUNT(*) from posts")
 		count_posts=cursor.fetchone()[0]
@@ -171,6 +181,7 @@ def main():
 
 if __name__ == "__main__":
 	args = arg_parser.parse_args()
+	db = db_handle()
 	if args.log:
 		#global logfile
 		logfile = open('error.log', 'w')

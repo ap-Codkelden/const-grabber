@@ -1,7 +1,8 @@
 import json
-from  user_ops import db_handle
+from db_handle import db_handle
 import sys
 
+# график по месяцам по количеству постов/комментариев. без указаания кто
 
 def posts_per_user():
 	db = db_handle()

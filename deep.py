@@ -6,6 +6,7 @@ import sqlite3
 import urllib.request
 import json
 import sys
+from db_handle import db_handle
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-v', '--verbose', help='print messages', \
@@ -39,15 +40,15 @@ def comment_deep_scan():
 	[(12345, 0), (mid, replies count)]"""
 	cursor.execute("select p.mid, count(c.rid) from posts p left outer join comments c on  p.mid = c.mid group by p.mid")
 	stored_posts_replies_count = cursor.fetchall()
-	"""Запуск выборки количества комментариев на текущий момент по сохраненным номерам 
-	постов, для чего вызывается фнукция get_live_replies_count() с аргументом 
+	"""Запуск выборки количества комментариев на текущий момент по сохраненным номерам
+	постов, для чего вызывается фнукция get_live_replies_count() с аргументом
 	stored_posts_replies_count , из которого она возьмет номера"""
 	live_posts_replies_count = get_live_replies_count(stored_posts_replies_count)
 	for i in range(len(live_posts_replies_count)):
 		if live_posts_replies_count[i] != stored_posts_replies_count[i]:
 			print(stored_posts_replies_count[i],'=>',live_posts_replies_count[i])
 			"""Функция compareAndAdd принимает аргументы:
-			Номер сообщения, Число комментариев в жуйке, 
+			Номер сообщения, Число комментариев в жуйке,
 			Число комментариев в базе"""
 			compareAndAdd(live_posts_replies_count[i][0], live_posts_replies_count[i][1], \
 				stored_posts_replies_count[i][1])
@@ -105,33 +106,21 @@ def seek_difference():
 	return c_live.fetchall()
 
 def append(lost_posts):
-	"""TODO 
-	избавиться от переменных
-	избегнуть KeyError"""
+	"""TODO
+	избавиться от переменных"""
 	POST_URL = """http://api.juick.com/thread?mid="""
 	for lost in lost_posts:
 		text = urllib.request.urlopen(POST_URL + str(lost[0]))
 		raw_content = text.read().replace(b"\t", b"")
 		readable = raw_content.decode('utf-8')
 		post = json.loads(readable)[0]
-		mid = post['mid']
-		uid = post['user']['uid']
-		uname = post['user']['uname']
-		body = post['body']
-		tags = post['tags']
-		timestamp = post['timestamp']
-		try:
-			replies = post['replies']
-		except KeyError:
-			replies = 0
 		sql = """INSERT INTO posts VALUES (%d, %d, "%s", "%s", "%s", "%s", %d)""" % \
-		(mid, uid, uname, body, tags, timestamp, replies)
+		(post['mid'], post['user']['uid'], post['user']['uname'], post['body'], \
+			post['tags'], post['timestamp'], (post['replies'] if 'replies' in post else 0))
 		cursor.execute(sql)
 		post_db.commit()
 
-
 def get_juick_posts(page_number):
-	#while page_number < 77:
 	while True:
 		try:
 			print(page_number)
@@ -145,6 +134,20 @@ def get_juick_posts(page_number):
 			sys.stdout.write("Total pages count: %d\n" % page_number-1)
 			break
 
+def pack():
+	cursor.close()
+	post_db.close()
+	db = db_handle()
+	# delete records from BL
+	db.deleteBLRecords()
+	if args.verbose:
+		db.cursor.execute("SELECT COUNT(*) from posts")
+		count_posts=db.cursor.fetchone()[0]
+
+		db.cursor.execute("SELECT COUNT(*) from comments")
+		count_replies=db.cursor.fetchone()[0]
+
+		sys.stdout.write("There are {0} messages, {1} comments in database.\n".format(count_posts,count_replies))
 
 if __name__ == "__main__":
 	args = arg_parser.parse_args()
@@ -156,12 +159,8 @@ if __name__ == "__main__":
 	append(seek_difference())
 
 	comment_deep_scan()
+	# temporary until this module will be use DBHandle
+	pack()
 
-	if args.verbose:
-		cursor.execute("SELECT COUNT(*) from posts")
-		count_posts=cursor.fetchone()[0]
-		
-		cursor.execute("SELECT COUNT(*) from comments")
-		count_replies=cursor.fetchone()[0]
 
-		sys.stdout.write("There are {0} messages, {1} comments in database.\n".format(count_posts,count_replies))
+

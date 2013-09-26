@@ -7,11 +7,11 @@ Calculation max number of the comments
 
 import json
 import sys
-from  user_ops import db_handle
+from db_handle import db_handle
 
 def max_comments():
 	db = db_handle()
-	
+
 	db.create_user_list()
 	db.cursor.execute("SELECT u.uname, COUNT(c.mid)  FROM users u \
 		LEFT OUTER JOIN comments c \
