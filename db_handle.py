@@ -48,7 +48,7 @@ class db_handle:
 	def addUserToBL(self, uid):
 		if self.checkIfUserinBL(uid) == 0:
 			print("No user with thid UID, appending...")
-			self.cursor.execute("INSERT INTO blacklist VALUES ({0});".format(uid))
+			self.cursor.execute("INSERT INTO blacklist VALUES ({0}, '');".format(uid))
 			self.post_db.commit()
 		else:
 			print("User already in BL, skip.")

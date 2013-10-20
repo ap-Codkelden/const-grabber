@@ -58,21 +58,27 @@ def get_live_replies_count(saved_posts):
 	""" saved_posts -- список котрежей, содержащих номера
 	постов
 	возвратит количество комментариев у сообщения #12345 """
-	counter = 0
-	live_replies = []
-	for i in saved_posts:
-		counter += 1
-		if counter % 10 == 0:
-			print(counter)
-		thread = urllib.request.urlopen(THREAD_URL+str(i[0]))
-		thread = thread.read().replace(b"\t", b"").replace(b"'",b"''")
-		thread = thread.decode('utf-8')
-		thread = json.loads(thread)
-		if len(thread) > 1:
-			live_replies.append((i[0],len(thread)-1))
-		else:
-			live_replies.append((i[0],0))
-	return live_replies
+	try:
+		counter = 0
+		live_replies = []
+		for i in saved_posts:
+			counter += 1
+			if counter % 10 == 0:
+				print(counter)
+			print(str(i[0]))
+			thread = urllib.request.urlopen(THREAD_URL+str(i[0]))
+			thread = thread.read().replace(b"\t", b"").replace(b"'",b"''")
+			thread = thread.decode('utf-8')
+			thread = json.loads(thread)
+			if len(thread) > 1:
+				live_replies.append((i[0],len(thread)-1))
+			else:
+				live_replies.append((i[0],0))
+		return live_replies
+	except urllib.error.HTTPError:
+		print ("Ошибка странице получения, попытка пропуска...")
+		pass
+
 
 
 def GetContent(number, url=URL_STRING):
